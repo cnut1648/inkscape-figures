@@ -4,7 +4,6 @@ import os
 import re
 import logging
 import subprocess
-import textwrap
 import warnings
 from pathlib import Path
 from shutil import copy
@@ -36,7 +35,7 @@ def latex_template(name, title):
     return '\n'.join((
         r"\begin{figure}[ht]",
         r"    \centering",
-        rf"    \incfig{{{name}}}",
+        rf"    \includegraphics[width=\linewidth]{{figures/{name}.png}}",
         rf"    \caption{{{title}}}",
         rf"    \label{{fig:{name}}}",
         r"\end{figure}"))
@@ -125,7 +124,7 @@ def maybe_recompile_figure(filepath):
 
     log.info('Recompiling %s', filepath)
 
-    pdf_path = filepath.parent / (filepath.stem + '.pdf')
+    png_path = filepath.parent / (filepath.stem + '.png')
     name = filepath.stem
 
     inkscape_version = subprocess.check_output(['inkscape', '--version'], universal_newlines=True)
@@ -142,26 +141,17 @@ def maybe_recompile_figure(filepath):
     inkscape_version_number= inkscape_version_number + [0] * (3 - len(inkscape_version_number))
 
     # Tuple comparison is like version comparison
-    if inkscape_version_number < [1, 0, 0]:
-        command = [
-            'inkscape',
-            '--export-area-page',
-            '--export-dpi', '300',
-            '--export-pdf', pdf_path,
-            '--export-latex', filepath
-            ]
-    else:
-        command = [
-            'inkscape', filepath,
-            '--export-area-page',
-            '--export-dpi', '300',
-            '--export-type=pdf',
-            '--export-latex',
-            '--export-filename', pdf_path
-            ]
+    assert inkscape_version_number > [1, 0, 0]:
+    command = [
+        'inkscape', filepath,
+        '--export-area-snap',
+        '--export-dpi', '300',
+        '--export-type=png',
+        '--export-filename', png_path
+        ]
 
     log.debug('Running command:')
-    log.debug(textwrap.indent(' '.join(str(e) for e in command), '    '))
+    log.debug(' '.join(str(e) for e in command))
 
     # Recompile the svg file
     completed_process = subprocess.run(command)
@@ -172,10 +162,8 @@ def maybe_recompile_figure(filepath):
         log.debug('Command succeeded')
 
     # Copy the LaTeX code to include the file to the clipboard
-    template = latex_template(name, beautify(name))
-    pyperclip.copy(template)
-    log.debug('Copying LaTeX template:')
-    log.debug(textwrap.indent(template, '    '))
+    pyperclip.copy(latex_template(name, beautify(name)))
+
 
 def watch_daemon_inotify():
     import inotify.adapters
@@ -308,12 +296,6 @@ def edit(root):
         path = files[index]
         add_root(figures)
         inkscape(path)
-
-        # Copy the LaTeX code to include the file to the clipboard
-        template = latex_template(path.stem, beautify(path.stem))
-        pyperclip.copy(template)
-        log.debug('Copying LaTeX template:')
-        log.debug(textwrap.indent(template, '    '))
 
 if __name__ == '__main__':
     cli()
