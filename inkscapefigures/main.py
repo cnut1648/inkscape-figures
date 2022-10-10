@@ -35,7 +35,7 @@ def latex_template(name, title):
     return '\n'.join((
         r"\begin{figure}[ht]",
         r"    \centering",
-        rf"    \includegraphics[width=\linewidth]{{figures/{name}.png}}",
+        rf"    \includegraphics[width=\linewidth,clip]{{figures/{name}.png}}",
         rf"    \caption{{{title}}}",
         rf"    \label{{fig:{name}}}",
         r"\end{figure}"))
@@ -141,7 +141,7 @@ def maybe_recompile_figure(filepath):
     inkscape_version_number= inkscape_version_number + [0] * (3 - len(inkscape_version_number))
 
     # Tuple comparison is like version comparison
-    assert inkscape_version_number > [1, 0, 0]:
+    assert inkscape_version_number > [1, 0, 0]
     command = [
         'inkscape', filepath,
         '--export-area-snap',
