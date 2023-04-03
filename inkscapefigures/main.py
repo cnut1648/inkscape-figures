@@ -99,6 +99,7 @@ def watch(daemon):
     Watches for figures.
     """
     if platform.system() == 'Linux':
+        log.info("Using linux")
         watcher_cmd = watch_daemon_inotify
     else:
         watcher_cmd = watch_daemon_fswatch
@@ -160,6 +161,11 @@ def maybe_recompile_figure(filepath):
         log.error('Return code %s', completed_process.returncode)
     else:
         log.debug('Command succeeded')
+
+    # trim
+    subprocess.run([
+        "convert", png_path, "-trim", png_path
+    ])
 
     # Copy the LaTeX code to include the file to the clipboard
     pyperclip.copy(latex_template(name, beautify(name)))
@@ -283,6 +289,7 @@ def edit(root):
     First argument is the figure directory.
     """
 
+    print("firing edit function")
     figures = Path(root).absolute()
 
     # Find svg files and sort them
@@ -293,6 +300,7 @@ def edit(root):
     names = [beautify(f.stem) for f in files]
     _, index, selected = pick(names)
     if selected:
+        print("selected", index, selected)
         path = files[index]
         add_root(figures)
         inkscape(path)
